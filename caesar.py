@@ -30,7 +30,7 @@ def caesar(text, key=3, mode="encrypt"):
     return result
 
 
-text = "Старый Бог здесь"
-cypher = caesar(text, key=3, mode="encrypt")
+text = "Хачатурян Владимир"
+cypher = caesar(text, key=1001, mode="encrypt")
 print(cypher)
-print(caesar(cypher, key=3, mode="decrypt"))
+print(caesar(cypher, key=1001, mode="decrypt"))

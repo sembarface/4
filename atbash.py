@@ -28,7 +28,7 @@ def atbash(text, mode="encrypt"):
     return result
 
 
-text = "Старый Бог здесь"
+text = "Хачатурян Владимир"
 cypher = atbash(text, mode="encrypt")
 print(cypher)
 print(atbash(cypher, mode="decrypt"))

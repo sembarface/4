@@ -1,8 +1,12 @@
 RU = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 EN = "abcdefghijklmnopqrstuvwxyz"
-
+import random
 
 def make_pairs(alphabet):
+    char_list = list(alphabet)
+    random.shuffle(char_list)
+    alphabet = ''.join(char_list)
+    
     pairs = {}
 
     half = len(alphabet) // 2
@@ -50,7 +54,12 @@ def kamasutra(text, mode="encrypt"):
     return result
 
 
-text = "Старый Бог здесь"
+text = "Хачатурян Владимир"
 cypher = kamasutra(text, mode="encrypt")
 print(cypher)
 print(kamasutra(cypher, mode="decrypt"))
+
+
+print({tuple(sorted((key,value))) for key, value in EN_PAIRS.items()})
+print('\n\n')
+print({tuple(sorted((key,value))) for key, value in RU_PAIRS.items()})
