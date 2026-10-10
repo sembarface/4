@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Базовый стиль для кнопок цифр -->
+    <style name="CalcButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <!-- Стиль для кнопок операций (+, -, *, /) -->
+    <style name="CalcButtonOp" parent="CalcButton">
+        <item name="android:background">#FF9800</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <!-- Стиль для кнопки сброса (C) -->
+    <style name="CalcButtonClear" parent="CalcButton">
+        <item name="android:background">#FF5722</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+</resources>
