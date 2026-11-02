@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Клинические испытания</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <a class="back" href="{{ url_for('index') }}">← На главную</a>
+    <h1>Клинические испытания</h1>
+
+    <div class="filters">
+        <input type="text" id="search" placeholder=" Поиск...">
+        <select id="f-disease">
+            <option value="">Все заболевания</option>
+            {% for d in diseases %}<option>{{ d }}</option>{% endfor %}
+        </select>
+        <select id="f-drug">
+            <option value="">Все лекарства</option>
+            {% for d in drugs %}<option>{{ d }}</option>{% endfor %}
+        </select>
+        <select id="f-eff">
+            <option value="">Эффективность: любая</option>
+            <option value="0.9">≥ 0.90</option>
+            <option value="0.8">≥ 0.80</option>
+            <option value="0.7">≥ 0.70</option>
+        </select>
+        <select id="f-bez">
+            <option value="">Безопасность: любая</option>
+            <option value="0.9">≥ 0.90</option>
+            <option value="0.85">≥ 0.85</option>
+            <option value="0.8">≥ 0.80</option>
+        </select>
+        <button id="reset" class="btn-secondary">Сбросить</button>
+    </div>
+
+    <p class="counter">Найдено: <span id="count">{{ clinical_trials|length }}</span> из {{ clinical_trials|length }}</p>
+
+    <table id="trials-table">
+        <thead>
+            <tr>
+                <th>Заболевание</th>
+                <th>Лекарство</th>
+                <th>Эффективность</th>
+                <th>Безопасность</th>
+                <th>Источник данных</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for t in clinical_trials %}
+            <tr
+                data-disease="{{ t.nazzab }}"
+                data-drug="{{ t.nazlek }}"
+                data-eff="{{ t.eff }}"
+                data-bez="{{ t.bez }}"
+                data-search="{{ (t.nazzab ~ ' ' ~ t.nazlek ~ ' ' ~ t.dan)|lower }}">
+                <td>{{ t.nazzab }}</td>
+                <td><strong>{{ t.nazlek }}</strong></td>
+                <td><span class="badge badge-eff">{{ t.eff }}</span></td>
+                <td><span class="badge badge-bez">{{ t.bez }}</span></td>
+                <td class="muted">{{ t.dan }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+const search = document.getElementById('search');
+const fDisease = document.getElementById('f-disease');
+const fDrug = document.getElementById('f-drug');
+const fEff = document.getElementById('f-eff');
+const fBez = document.getElementById('f-bez');
+const rows = Array.from(document.querySelectorAll('#trials-table tbody tr'));
+const countEl = document.getElementById('count');
+
+function applyFilters() {
+    const q = search.value.trim().toLowerCase();
+    const dis = fDisease.value;
+    const drg = fDrug.value;
+    const eff = parseFloat(fEff.value) || 0;
+    const bez = parseFloat(fBez.value) || 0;
+    let visible = 0;
+    rows.forEach(r => {
+        const ok =
+            (!q || r.dataset.search.includes(q)) &&
+            (!dis || r.dataset.disease === dis) &&
+            (!drg || r.dataset.drug === drg) &&
+            (parseFloat(r.dataset.eff) >= eff) &&
+            (parseFloat(r.dataset.bez) >= bez);
+        r.style.display = ok ? '' : 'none';
+        if (ok) visible++;
+    });
+    countEl.textContent = visible;
+}
+
+[search, fDisease, fDrug, fEff, fBez].forEach(el => {
+    el.addEventListener('input', applyFilters);
+    el.addEventListener('change', applyFilters);
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+    search.value = '';
+    fDisease.value = '';
+    fDrug.value = '';
+    fEff.value = '';
+    fBez.value = '';
+    applyFilters();
+});
+</script>
+</body>
+</html>

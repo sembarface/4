@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Рекомендации</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <a class="back" href="{{ url_for('index') }}">← На главную</a>
+    <h1>Рекомендательная система</h1>
+    <p class="muted">Выберите заболевание (и, при желании, пациента — учтём аллергии). Система отберёт лекарства по данным клинических испытаний и отсортирует по рейтингу.</p>
+
+    <form method="post" class="rec-form">
+        <div class="field">
+            <label>Заболевание</label>
+            <select name="disease" required>
+                <option value="">— выберите —</option>
+                {% for d in diseases %}
+                    <option value="{{ d.name }}" {% if d.name == selected_disease %}selected{% endif %}>
+                        {{ d.name }}{% if d.mkb %} ({{ d.mkb }}){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label>Пациент (опционально, для учёта аллергий)</label>
+            <select name="patient">
+                <option value="">— без учёта —</option>
+                {% for p in patients %}
+                    <option value="{{ p.fio }}" {% if p.fio == selected_patient %}selected{% endif %}>
+                        {{ p.fio }}{% if p.allergy %} — аллергии: {{ p.allergy }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn-primary">Получить рекомендации</button>
+    </form>
+
+    {% if selected_disease %}
+        <hr class="divider">
+        {% if recs %}
+            <h2>Рекомендации по «{{ selected_disease }}»</h2>
+            <p class="muted">Рейтинг = 0.6·эффективность + 0.4·безопасность (по данным клинических испытаний).</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Лекарство</th>
+                        <th>Производитель</th>
+                        <th>Форма</th>
+                        <th>Фармгруппа</th>
+                        <th>Эффект.</th>
+                        <th>Безоп.</th>
+                        <th>Рейтинг</th>
+                        <th>Заметки</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in recs %}
+                    <tr class="{% if r.warning %}warn{% endif %}">
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ r.drug }}</strong>
+                            {% if r.warning %}<span class="tag-warn">{{ r.warning }}</span>{% endif %}
+                        </td>
+                        <td>{{ r.manufacturer }}</td>
+                        <td>{{ r.form }}</td>
+                        <td>{{ r.group }}</td>
+                        <td><span class="badge badge-eff">{{ '%.2f'|format(r.eff) }}</span></td>
+                        <td><span class="badge badge-bez">{{ '%.2f'|format(r.bez) }}</span></td>
+                        <td>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: {{ (r.score * 100)|round(0) }}%"></div>
+                                <span>{{ r.score }}</span>
+                            </div>
+                        </td>
+                        <td class="muted">{{ r.notes }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty">Для заболевания «{{ selected_disease }}» нет клинических испытаний в онтологии.</p>
+        {% endif %}
+    {% endif %}
+</div>
+</body>
+</html>
