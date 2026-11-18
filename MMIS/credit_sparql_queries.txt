@@ -1,0 +1,172 @@
+---------------------------------------
+1. Все записи данных заемщиков с возрастом и регионом.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?age ?region
+WHERE {
+  ?profile a credit:PersonalData ;
+           credit:ageYears ?age ;
+           credit:residenceRegion ?region .
+}
+ORDER BY ?profile
+---------------------------------------
+2. Общее количество записей данных заемщиков.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT (COUNT(DISTINCT ?profile) AS ?profileCount)
+WHERE {
+  ?profile a credit:PersonalData .
+}
+---------------------------------------
+3. Семейные положения, встречающиеся более чем у одного профиля.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?maritalStatus (COUNT(DISTINCT ?profile) AS ?profileCount)
+WHERE {
+  ?profile a credit:PersonalData ;
+           credit:maritalStatus ?maritalStatus .
+}
+GROUP BY ?maritalStatus
+HAVING (COUNT(DISTINCT ?profile) > 1)
+ORDER BY DESC(?profileCount) ?maritalStatus
+---------------------------------------
+4. Средний совокупный месячный доход по записям доходов.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT (AVG(?income) AS ?averageMonthlyIncome)
+WHERE {
+  ?incomeRecord a credit:IncomeEmployment ;
+                credit:monthlyIncome ?income .
+}
+---------------------------------------
+5. Профили, месячный доход которых выше среднего по всем записям доходов.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?income ?averageIncome
+WHERE {
+  ?assessment a credit:CreditworthinessAssessment ;
+              credit:hasPersonalData ?profile ;
+              credit:hasIncomeEmployment ?incomeRecord .
+  ?incomeRecord credit:monthlyIncome ?income .
+  {
+    SELECT (AVG(?value) AS ?averageIncome)
+    WHERE {
+      ?record a credit:IncomeEmployment ;
+              credit:monthlyIncome ?value .
+    }
+  }
+  FILTER (?income > ?averageIncome)
+}
+ORDER BY DESC(?income) ?profile
+---------------------------------------
+6. Один профиль с максимальным возрастом.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?age ?region
+WHERE {
+  ?profile a credit:PersonalData ;
+           credit:ageYears ?age ;
+           credit:residenceRegion ?region .
+}
+ORDER BY DESC(?age) ?profile
+LIMIT 1
+---------------------------------------
+7. Профили с хотя бы одной явно указанной просрочкой.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?overdueCount ?regularity
+WHERE {
+  ?assessment a credit:CreditworthinessAssessment ;
+              credit:hasPersonalData ?profile ;
+              credit:hasCreditHistory ?history .
+  ?history credit:hasPaymentHistory ?payments .
+  ?payments credit:overdueCount ?overdueCount ;
+            credit:paymentRegularity ?regularity .
+  FILTER (?overdueCount > 0)
+}
+ORDER BY DESC(?overdueCount) ?profile
+---------------------------------------
+8. Все профили и дополнительные источники дохода, если они указаны.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?income ?source
+WHERE {
+  ?assessment a credit:CreditworthinessAssessment ;
+              credit:hasPersonalData ?profile ;
+              credit:hasIncomeEmployment ?incomeRecord .
+  ?incomeRecord credit:monthlyIncome ?income .
+  OPTIONAL { ?incomeRecord credit:additionalIncomeSource ?source . }
+}
+ORDER BY ?profile ?source
+---------------------------------------
+9. Профили, регион которых начинается с буквы М или С.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?region
+WHERE {
+  ?profile a credit:PersonalData ;
+           credit:residenceRegion ?region .
+  FILTER (REGEX(STR(?region), "^[МС]", "i"))
+}
+ORDER BY ?profile
+---------------------------------------
+10. Запрашиваемые кредиты с целью ремонта или покупки мебели.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?purpose ?amount ?termMonths
+WHERE {
+  ?assessment a credit:CreditworthinessAssessment ;
+              credit:hasPersonalData ?profile ;
+              credit:hasRequestedLoan ?loan .
+  ?loan credit:loanPurpose ?purpose ;
+        credit:requestedAmount ?amount ;
+        credit:termMonths ?termMonths .
+  FILTER (REGEX(STR(?purpose), "ремонт|мебел", "i"))
+}
+ORDER BY ?profile
+---------------------------------------
+11. Профили с указанным образованием, отличным от строки «высшее».
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?education
+WHERE {
+  ?profile a credit:PersonalData ;
+           credit:education ?education .
+  FILTER (!REGEX(STR(?education), "^высшее$", "i"))
+}
+ORDER BY ?profile
+---------------------------------------
+12. Сохраненный DTI и его расчет из месячных платежей и месячного дохода.
+
+PREFIX credit: <http://www.semanticweb.org/creditworthiness#>
+
+SELECT ?profile ?income ?monthlyPayments ?storedDTI
+       (ROUND((?monthlyPayments / ?income) * 1000000) / 1000000 AS ?calculatedDTI)
+       (ROUND((?monthlyPayments / ?income) * 1000000) / 10000 AS ?dtiPercent)
+WHERE {
+  ?assessment a credit:CreditworthinessAssessment ;
+              credit:hasPersonalData ?profile ;
+              credit:hasIncomeEmployment ?incomeRecord ;
+              credit:hasCreditHistory ?history ;
+              credit:hasFinancialIndicators ?financial .
+  ?history credit:hasCurrentCreditLoad ?load .
+  ?financial credit:hasDtiIncomeBasis ?incomeRecord ;
+             credit:hasDtiPaymentBasis ?load ;
+             credit:dtiRatio ?storedDTI .
+  ?incomeRecord credit:monthlyIncome ?income .
+  ?load credit:monthlyDebtPayments ?monthlyPayments .
+  FILTER (?income > 0)
+}
+ORDER BY ?profile
+---------------------------------------
