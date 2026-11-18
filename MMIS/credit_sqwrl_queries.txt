@@ -1,0 +1,85 @@
+---------------------------------------
+1. Все записи данных заемщиков с возрастом и регионом по убыванию возраста.
+
+credit:PersonalData(?profile) ^
+credit:ageYears(?profile, ?age) ^
+credit:residenceRegion(?profile, ?region)
+-> sqwrl:select(?profile, ?age, ?region) ^
+sqwrl:orderByDescending(?age)
+---------------------------------------
+2. Общее количество записей данных заемщиков.
+
+credit:PersonalData(?profile) ^
+sqwrl:makeSet(?profiles, ?profile) ^
+sqwrl:size(?count, ?profiles)
+-> sqwrl:select(?count)
+---------------------------------------
+3. Количество записей данных заемщиков по семейному положению.
+
+credit:PersonalData(?profile) ^
+credit:maritalStatus(?profile, ?status) ^
+sqwrl:makeSet(?profiles, ?profile) ^
+sqwrl:groupBy(?profiles, ?status) ^
+sqwrl:size(?count, ?profiles)
+-> sqwrl:select(?status, ?count) ^
+sqwrl:orderByDescending(?count)
+---------------------------------------
+4. Средний совокупный месячный доход по записям доходов.
+
+credit:IncomeEmployment(?income) ^
+credit:monthlyIncome(?income, ?amount) ^
+sqwrl:makeBag(?amounts, ?amount) ^
+sqwrl:avg(?average, ?amounts)
+-> sqwrl:select(?average)
+---------------------------------------
+5. Профили с хотя бы одной указанной просрочкой.
+
+credit:CreditworthinessAssessment(?a) ^
+credit:hasPersonalData(?a, ?profile) ^
+credit:hasCreditHistory(?a, ?history) ^
+credit:hasPaymentHistory(?history, ?payments) ^
+credit:overdueCount(?payments, ?count) ^
+swrlb:greaterThan(?count, 0)
+-> sqwrl:select(?profile, ?count) ^
+sqwrl:orderByDescending(?count)
+---------------------------------------
+6. Профили с запрашиваемым кредитом на ремонт или покупку мебели.
+
+credit:CreditworthinessAssessment(?a) ^
+credit:hasPersonalData(?a, ?profile) ^
+credit:hasRequestedLoan(?a, ?loan) ^
+credit:loanPurpose(?loan, ?purpose) ^
+credit:requestedAmount(?loan, ?amount) ^
+swrlb:matches(?purpose, ".*(ремонт|мебел).*")
+-> sqwrl:select(?profile, ?purpose, ?amount)
+---------------------------------------
+7. Профили с положительным дополнительным месячным доходом.
+
+credit:CreditworthinessAssessment(?a) ^
+credit:hasPersonalData(?a, ?profile) ^
+credit:hasIncomeEmployment(?a, ?income) ^
+credit:additionalMonthlyIncome(?income, ?additional) ^
+credit:monthlyIncome(?income, ?total) ^
+swrlb:greaterThan(?additional, 0)
+-> sqwrl:select(?profile, ?additional, ?total) ^
+sqwrl:orderByDescending(?additional)
+---------------------------------------
+8. DTI из месячных долговых платежей и месячного дохода в долях и процентах.
+
+credit:CreditworthinessAssessment(?a) ^
+credit:hasPersonalData(?a, ?profile) ^
+credit:hasIncomeEmployment(?a, ?income) ^
+credit:hasCreditHistory(?a, ?history) ^
+credit:hasCurrentCreditLoad(?history, ?load) ^
+credit:monthlyIncome(?income, ?amount) ^
+credit:monthlyDebtPayments(?load, ?payments) ^
+swrlb:greaterThan(?amount, 0) ^
+swrlb:multiply(?scaledPayments, ?payments, 1000000.000000) ^
+swrlb:divide(?scaledRatio, ?scaledPayments, ?amount) ^
+swrlb:add(?shifted, ?scaledRatio, 0.5) ^
+swrlb:floor(?rounded, ?shifted) ^
+swrlb:multiply(?dti, ?rounded, 0.000001) ^
+swrlb:multiply(?percent, ?dti, 100)
+-> sqwrl:select(?profile, ?amount, ?payments, ?dti, ?percent) ^
+sqwrl:orderByDescending(?dti)
+---------------------------------------

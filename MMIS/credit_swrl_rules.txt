@@ -1,0 +1,46 @@
+---------------------------------------
+1. Связать финансовые показатели с источником месячного дохода из той же оценки.
+
+credit:CreditworthinessAssessment(?a) ^
+credit:hasIncomeEmployment(?a, ?income) ^
+credit:hasFinancialIndicators(?a, ?financial)
+-> credit:hasDtiIncomeBasis(?financial, ?income)
+---------------------------------------
+2. Связать финансовые показатели с источником месячных долговых платежей из той же оценки.
+
+credit:CreditworthinessAssessment(?a) ^
+credit:hasCreditHistory(?a, ?history) ^
+credit:hasCurrentCreditLoad(?history, ?load) ^
+credit:hasFinancialIndicators(?a, ?financial)
+-> credit:hasDtiPaymentBasis(?financial, ?load)
+---------------------------------------
+3. При положительном остатке на счетах вывести наличие сбережений.
+
+credit:Savings(?s) ^
+credit:accountBalance(?s, ?balance) ^
+swrlb:greaterThan(?balance, 0)
+-> credit:hasSavingsAvailable(?s, true)
+---------------------------------------
+4. Вычислить совокупный месячный доход как сумму официального и дополнительного дохода.
+
+credit:IncomeEmployment(?income) ^
+credit:officialMonthlyIncome(?income, ?official) ^
+credit:additionalMonthlyIncome(?income, ?additional) ^
+swrlb:add(?total, ?official, ?additional)
+-> credit:monthlyIncome(?income, ?total)
+---------------------------------------
+5. Вычислить DTI по месячным долговым платежам и месячному доходу с округлением до шести знаков.
+
+credit:FinancialIndicators(?financial) ^
+credit:hasDtiIncomeBasis(?financial, ?income) ^
+credit:hasDtiPaymentBasis(?financial, ?load) ^
+credit:monthlyIncome(?income, ?monthlyIncome) ^
+credit:monthlyDebtPayments(?load, ?payments) ^
+swrlb:greaterThan(?monthlyIncome, 0) ^
+swrlb:multiply(?scaledPayments, ?payments, 1000000.000000) ^
+swrlb:divide(?scaledRatio, ?scaledPayments, ?monthlyIncome) ^
+swrlb:add(?shifted, ?scaledRatio, 0.5) ^
+swrlb:floor(?rounded, ?shifted) ^
+swrlb:multiply(?dti, ?rounded, 0.000001)
+-> credit:dtiRatio(?financial, ?dti)
+---------------------------------------
