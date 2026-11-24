@@ -1,65 +1,75 @@
 
+import random
 from math import gcd
-from random import randint
+from sympy import factorint, totient
+from rabin_miller import rabin_miller, generate_prime
 
 
-def factorize(n):
-    factors = []
-    d = 2
+def generate_p(bits):
+    if bits != 1024:
+        return generate_prime(bits)
 
-    while d * d <= n:
-        power = 0
+    while True:
+        q = generate_prime(bits - 12)
+        min_c = ((1 << (bits - 1)) - 2) // (2 * q) + 1
+        max_c = ((1 << bits) - 2) // (2 * q)
 
-        while n % d == 0:
-            n //= d
-            power += 1
-
-        if power > 0:
-            factors.append((d, power))
-
-        d += 1
-
-    if n > 1:
-        factors.append((n, 1))
-
-    return factors
+        for c in range(min_c, max_c + 1):
+            p = 2 * c * q + 1
+            if rabin_miller(p):
+                return p
 
 
-for p, candidates in [(13, [3, 7]), (1022333835329657, [3])]:
+for bits in [6, 1024]:
+    p = generate_p(bits)
+
     k = p - 1
-    mn = factorize(k)
+    mn = sorted(factorint(k).items())
     pi = [d for d, power in mn]
     s = len(pi)
     ki = [k // d for d in pi]
+    kp = int(totient(k))
 
-    kp = k
-    for d in pi:
-        kp = kp // d * (d - 1)
+    g = 3
+    while True:
+        aki = [pow(g, exponent, p) for exponent in ki]
+        if 1 not in aki:
+            break
+        g += 1
 
-    print("\np =", p)
-    print("k =", k)
-    print("mn =", mn)
-    print("pi =", pi)
-    print("s =", s)
-    print("ki =", ki)
-    print("kp =", kp)
-    print("kp / k =", round(kp / k, 3))
+    t = 0
+    while gcd(t, k) != 1:
+        t = random.randint(k // 2, k)
 
-    for a in candidates:
-        aki = [pow(a, n, p) for n in ki]
+    new_g = pow(g, t, p)
 
-        print("\na =", a)
-        print("aki =", aki)
-        print("Есть 1:", 1 in aki)
-        print("Первообразный корень:", 1 not in aki)
+    a = random.randint(2, p - 2)
+    b = random.randint(2, p - 2)
 
-    if p != 13:
-        t = 0
+    A = pow(g, a, p)
+    B = pow(g, b, p)
 
-        while gcd(t, k) != 1:
-            t = randint(k // 2, k)
+    K_A = pow(B, a, p)
+    K_B = pow(A, b, p)
 
-        new_a = pow(3, t, p)
-
-        print("\nt =", t)
-        print("Новый первообразный корень =", new_a)
+    print(f'\nДлина числа: {bits} бит')
+    print('p =', p)
+    print('k =', k)
+    print('mn =', mn)
+    print('pi =', pi)
+    print('s =', s)
+    print('ki =', ki)
+    print('kp =', kp)
+    print('kp / k =', round(kp / k, 3))
+    print('Первообразный корень g =', g)
+    print('aki =', aki)
+    print('Есть 1:', 1 in aki)
+    print('t =', t)
+    print('Новый первообразный корень =', new_g)
+    print('Секрет Алисы a =', a)
+    print('Секрет Боба b =', b)
+    print('Открытый ключ Алисы A =', A)
+    print('Открытый ключ Боба B =', B)
+    print('Общий ключ Алисы K_A =', K_A)
+    print('Общий ключ Боба K_B =', K_B)
+    print('Ключи совпадают:', K_A == K_B)
