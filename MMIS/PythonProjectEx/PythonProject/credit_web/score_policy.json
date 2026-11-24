@@ -1,0 +1,6 @@
+{
+  "version": "score-v2",
+  "annualRate": "0.24",
+  "approvalThreshold": 25,
+  "criticalAdjustment": -35
+}
